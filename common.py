@@ -373,171 +373,171 @@ def work_to_arch(RUN_ID,CNTRT_ID,FILE_NAME):
 
 ###################################################################################
 
-def load_file(file_type, RUN_ID, CNTRT_ID, STEP_FILE_PATTERN, vendor_pattern, notebook_name, delimiter):
-    # Define paths for raw and light refined data
-    RAW_PATH = "tp-source-data/WORK/"
-    LIGHT_REFINED_PATH = 'tp-publish-data/'
+# def load_file(file_type, RUN_ID, CNTRT_ID, STEP_FILE_PATTERN, vendor_pattern, notebook_name, delimiter):
+#     # Define paths for raw and light refined data
+#     RAW_PATH = "tp-source-data/WORK/"
+#     LIGHT_REFINED_PATH = 'tp-publish-data/'
     
-    # Read column mappings from parquet file
-    df_dpf_col_asign_vw = spark.read.parquet(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/column_mappings_df_dpf_col_asign_vw")
+#     # Read column mappings from parquet file
+#     df_dpf_col_asign_vw = spark.read.parquet(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/column_mappings_df_dpf_col_asign_vw")
     
-    # List files in the raw data path
-    files = dbutils.fs.ls(f"/mnt/{RAW_PATH}")
-    localpath = " "
+#     # List files in the raw data path
+#     files = dbutils.fs.ls(f"/mnt/{RAW_PATH}")
+#     localpath = " "
 
-    # Identify the local path of the ZIP file containing the RUN_ID
-    for fi in files:
-        filename = fi.name
-        filepath = fi.path    
-        endwithzip = filename.endswith('.zip')
-        endwithgz = filename.endswith('.gz')
-        endwithcsv = filename.endswith('.csv')
+#     # Identify the local path of the ZIP file containing the RUN_ID
+#     for fi in files:
+#         filename = fi.name
+#         filepath = fi.path    
+#         endwithzip = filename.endswith('.zip')
+#         endwithgz = filename.endswith('.gz')
+#         endwithcsv = filename.endswith('.csv')
     
-        if ((endwithzip) and (str(RUN_ID) in filename)):  # If input file is a ZIP file
-            localpath = os.path.join(f"/dbfs/mnt/{RAW_PATH}", filename)
+#         if ((endwithzip) and (str(RUN_ID) in filename)):  # If input file is a ZIP file
+#             localpath = os.path.join(f"/dbfs/mnt/{RAW_PATH}", filename)
 
-    # Prepare file name patterns
-    s = STEP_FILE_PATTERN
-    position = s.find('%')
-    file_name_for_zip = s.replace('%', '*')
-    file_name = s[0:position] + f'*{RUN_ID}*'
+#     # Prepare file name patterns
+#     s = STEP_FILE_PATTERN
+#     position = s.find('%')
+#     file_name_for_zip = s.replace('%', '*')
+#     file_name = s[0:position] + f'*{RUN_ID}*'
 
-    # Read the external data file based on the file type and local path
-    if ".zip" in localpath:
-        df_extrn = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f"/mnt/{RAW_PATH}/*{RUN_ID}*/{file_name_for_zip}")
-    else:
-        df_extrn = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/{file_name}')
+#     # Read the external data file based on the file type and local path
+#     if ".zip" in localpath:
+#         df_extrn = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f"/mnt/{RAW_PATH}/*{RUN_ID}*/{file_name_for_zip}")
+#     else:
+#         df_extrn = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/{file_name}')
 
-    if file_type == 'fact':
-        if ".zip" in localpath:
-            df_extrn_raw = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/*{RUN_ID}*/{file_name_for_zip}*')
-        else:
-            df_extrn_raw = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/{file_name}')
+#     if file_type == 'fact':
+#         if ".zip" in localpath:
+#             df_extrn_raw = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/*{RUN_ID}*/{file_name_for_zip}*')
+#         else:
+#             df_extrn_raw = spark.read.format('csv').option('header', True).option('delimiter', delimiter).load(f'/mnt/{RAW_PATH}/{file_name}')
 
-    # Strip whitespace from column names
-    for i in df_extrn.columns:
-        df_extrn = df_extrn.withColumnRenamed(i, i.strip())
+#     # Strip whitespace from column names
+#     for i in df_extrn.columns:
+#         df_extrn = df_extrn.withColumnRenamed(i, i.strip())
 
-    if file_type == 'fact':
-        for i in df_extrn_raw.columns:
-            df_extrn_raw = df_extrn_raw.withColumnRenamed(i, i.strip())
-    if file_type != 'fact':
-        df_extrn_raw = df_extrn
+#     if file_type == 'fact':
+#         for i in df_extrn_raw.columns:
+#             df_extrn_raw = df_extrn_raw.withColumnRenamed(i, i.strip())
+#     if file_type != 'fact':
+#         df_extrn_raw = df_extrn
     
-    # Define list of columns based on file type
-    if file_type == 'prod':
-        list_cols = ['PROD', 'product', 'prod']
-    elif file_type == 'mkt':
-        list_cols = ['MKT', 'market', 'mkt']
-    elif file_type == 'fact':
-        list_cols = ['FACT', 'fact']
-    elif file_type == 'time':
-        list_cols = ['TIME', 'time']
-    else:
-        list_cols = []
+#     # Define list of columns based on file type
+#     if file_type == 'prod':
+#         list_cols = ['PROD', 'product', 'prod']
+#     elif file_type == 'mkt':
+#         list_cols = ['MKT', 'market', 'mkt']
+#     elif file_type == 'fact':
+#         list_cols = ['FACT', 'fact']
+#     elif file_type == 'time':
+#         list_cols = ['TIME', 'time']
+#     else:
+#         list_cols = []
 
-    # Filter column mappings based on contract ID and table type
-    df_dpf_col_asign_vw = df_dpf_col_asign_vw.filter(col('cntrt_id') == CNTRT_ID).where(df_dpf_col_asign_vw['dmnsn_name'].rlike("|".join(["(" + column + ")" for column in list_cols])))
-    df_dpf_col_asign_vw = df_dpf_col_asign_vw.select("file_col_name", "db_col_name").distinct()
+#     # Filter column mappings based on contract ID and table type
+#     df_dpf_col_asign_vw = df_dpf_col_asign_vw.filter(col('cntrt_id') == CNTRT_ID).where(df_dpf_col_asign_vw['dmnsn_name'].rlike("|".join(["(" + column + ")" for column in list_cols])))
+#     df_dpf_col_asign_vw = df_dpf_col_asign_vw.select("file_col_name", "db_col_name").distinct()
 
-    df_dpf_col_asign_vw1 = df_dpf_col_asign_vw
+#     df_dpf_col_asign_vw1 = df_dpf_col_asign_vw
 
-    # Create a temporary view for column assignments
-    df_dpf_col_asign_vw.createOrReplaceTempView("col_asign")
+#     # Create a temporary view for column assignments
+#     df_dpf_col_asign_vw.createOrReplaceTempView("col_asign")
     
-    df_dpf_col_asign_vw = spark.sql('''
-        SELECT t.file_col_name, array_join(collect_list(t.db_col_name), ',') AS db_col_name
-        FROM (
-            SELECT file_col_name, db_col_name
-            FROM col_asign
-            ORDER BY file_col_name, db_col_name
-        ) t
-        GROUP BY t.file_col_name
-    ''')
+#     df_dpf_col_asign_vw = spark.sql('''
+#         SELECT t.file_col_name, array_join(collect_list(t.db_col_name), ',') AS db_col_name
+#         FROM (
+#             SELECT file_col_name, db_col_name
+#             FROM col_asign
+#             ORDER BY file_col_name, db_col_name
+#         ) t
+#         GROUP BY t.file_col_name
+#     ''')
     
 
-    # Create a dictionary for column mappings
-    dictionary = {row['file_col_name']: row['db_col_name'] for row in df_dpf_col_asign_vw.collect()}
+#     # Create a dictionary for column mappings
+#     dictionary = {row['file_col_name']: row['db_col_name'] for row in df_dpf_col_asign_vw.collect()}
     
-    for key, value in dictionary.items():
-        if "," in value:
-            lstValues = value.split(",")
-            for v in lstValues:
-                df_extrn = df_extrn.withColumn(v, col(f'`{key}`'))
-            df_extrn = df_extrn.drop(key)
-        else:
-            df_extrn = df_extrn.withColumnRenamed(key, value)
-    # display(df_extrn)
-    # Drop extra columns not in the user-mapped columns
-    df_cols = df_extrn.columns
-    column = []
-    for item in dictionary:
-        if "," in dictionary[item]:
-            lstItems = dictionary[item].split(",")
-            for v in lstItems:
-                column.append(v)
-        else:
-            column.append(dictionary[item])
-    column = [n for n in column if len(n) != 0]
+#     for key, value in dictionary.items():
+#         if "," in value:
+#             lstValues = value.split(",")
+#             for v in lstValues:
+#                 df_extrn = df_extrn.withColumn(v, col(f'`{key}`'))
+#             df_extrn = df_extrn.drop(key)
+#         else:
+#             df_extrn = df_extrn.withColumnRenamed(key, value)
+#     # display(df_extrn)
+#     # Drop extra columns not in the user-mapped columns
+#     df_cols = df_extrn.columns
+#     column = []
+#     for item in dictionary:
+#         if "," in dictionary[item]:
+#             lstItems = dictionary[item].split(",")
+#             for v in lstItems:
+#                 column.append(v)
+#         else:
+#             column.append(dictionary[item])
+#     column = [n for n in column if len(n) != 0]
 
-    drop_cols = [col for col in df_cols if col not in column]
-    df_extrn = df_extrn.drop(*drop_cols)
-    lstDropRowCols = df_extrn.columns
+#     drop_cols = [col for col in df_cols if col not in column]
+#     df_extrn = df_extrn.drop(*drop_cols)
+#     lstDropRowCols = df_extrn.columns
     
-    # Drop rows with all measure columns null for non-fact files
-    if file_type != 'fact':
-        #df_measr = spark.read.parquet(f"/mnt/{LIGHT_REFINED_PATH}MM_MEASR_LKP_VW/")
-        df_measr=read_query_from_postgres(f"SELECT *  FROM {postgres_schema}.mm_measr_lkp")
-        #lstMeasrs = [row['measr_phys_name'] for row in df_measr.where('fact_type_code = "TP"').select('measr_phys_name').distinct().collect()]
-        lstMeasrs = [row['measr_phys_name'] for row in df_measr.select('measr_phys_name').distinct().collect()]
-        drop_null_measr_cols = [col for col in lstDropRowCols if col in lstMeasrs]
-        df_extrn = df_extrn.dropna(thresh=len(drop_null_measr_cols), subset=(drop_null_measr_cols))
+#     # Drop rows with all measure columns null for non-fact files
+#     if file_type != 'fact':
+#         #df_measr = spark.read.parquet(f"/mnt/{LIGHT_REFINED_PATH}MM_MEASR_LKP_VW/")
+#         df_measr=read_query_from_postgres(f"SELECT *  FROM {postgres_schema}.mm_measr_lkp")
+#         #lstMeasrs = [row['measr_phys_name'] for row in df_measr.where('fact_type_code = "TP"').select('measr_phys_name').distinct().collect()]
+#         lstMeasrs = [row['measr_phys_name'] for row in df_measr.select('measr_phys_name').distinct().collect()]
+#         drop_null_measr_cols = [col for col in lstDropRowCols if col in lstMeasrs]
+#         df_extrn = df_extrn.dropna(thresh=len(drop_null_measr_cols), subset=(drop_null_measr_cols))
 
-    # Handle columns with special characters
-    df1 = df_dpf_col_asign_vw1.filter("db_col_name like '%#%'").select("db_col_name")
-    df2 = df1.withColumn("db_col_name", F.regexp_replace(F.col("db_col_name"), "[0-9#\s]", "")).distinct()
+#     # Handle columns with special characters
+#     df1 = df_dpf_col_asign_vw1.filter("db_col_name like '%#%'").select("db_col_name")
+#     df2 = df1.withColumn("db_col_name", F.regexp_replace(F.col("db_col_name"), "[0-9#\s]", "")).distinct()
 
-    l1 = df1.select("db_col_name").collect()
-    l1 = [row["db_col_name"] for row in l1]
-    l2 = df2.select("db_col_name").collect()
-    l2 = [row["db_col_name"] for row in l2]
+#     l1 = df1.select("db_col_name").collect()
+#     l1 = [row["db_col_name"] for row in l1]
+#     l2 = df2.select("db_col_name").collect()
+#     l2 = [row["db_col_name"] for row in l2]
 
-    for z in l2:
-        lst = []
-        for x in l1:
-            if x.startswith(z):
-                lst.append(x)
-        lst_cols1 = sorted(lst)
-        if file_type == 'fact':
-            lst_cols1 = ['`' + x + '`' for x in lst_cols1]
+#     for z in l2:
+#         lst = []
+#         for x in l1:
+#             if x.startswith(z):
+#                 lst.append(x)
+#         lst_cols1 = sorted(lst)
+#         if file_type == 'fact':
+#             lst_cols1 = ['`' + x + '`' for x in lst_cols1]
 
-        for d in lst_cols1:
-            #if file_type != 'fact':
-            df_extrn = df_extrn.withColumn(d, when(col(d).isNull(), '').otherwise(col(d)))
-            #elif file_type == 'fact':
-                #df_extrn = df_extrn.withColumn(z, F.expr('+'.join(lst_cols1)))
-        #if file_type != 'fact':
-        df_extrn = df_extrn.withColumn(z, concat_ws(':', *lst_cols1))
-        df_extrn = df_extrn.drop(*lst_cols1)
-    df_extrn = df_extrn.drop(*l1)
+#         for d in lst_cols1:
+#             #if file_type != 'fact':
+#             df_extrn = df_extrn.withColumn(d, when(col(d).isNull(), '').otherwise(col(d)))
+#             #elif file_type == 'fact':
+#                 #df_extrn = df_extrn.withColumn(z, F.expr('+'.join(lst_cols1)))
+#         #if file_type != 'fact':
+#         df_extrn = df_extrn.withColumn(z, concat_ws(':', *lst_cols1))
+#         df_extrn = df_extrn.drop(*lst_cols1)
+#     df_extrn = df_extrn.drop(*l1)
 
-    # Convert column names to lowercase
-    for i in df_extrn.columns:
-       df_extrn = df_extrn.withColumnRenamed(i, i.lower())
+#     # Convert column names to lowercase
+#     for i in df_extrn.columns:
+#        df_extrn = df_extrn.withColumnRenamed(i, i.lower())
 
-    # Remove duplicate rows for non-fact files
-    if file_type != 'fact':
-        df_extrn = df_extrn.distinct()
+#     # Remove duplicate rows for non-fact files
+#     if file_type != 'fact':
+#         df_extrn = df_extrn.distinct()
 
-    # Save the processed DataFrame to parquet files
+#     # Save the processed DataFrame to parquet files
   
-    # display(df_extrn_raw)
-    df_extrn.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn")
-    df_extrn_raw.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn_raw")
-    if file_type == 'fact':
-        df_extrn.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn_dvm")
+#     # display(df_extrn_raw)
+#     df_extrn.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn")
+#     df_extrn_raw.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn_raw")
+#     if file_type == 'fact':
+#         df_extrn.write.mode("overwrite").format('parquet').save(f"/mnt/tp-source-data/temp/materialised/{RUN_ID}/{notebook_name}_df_{file_type}_extrn_dvm")
     
-    return 'Success'
+#     return 'Success'
 
 ############################################################################
 
