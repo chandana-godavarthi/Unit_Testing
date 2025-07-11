@@ -34,17 +34,6 @@ def get_dbutils(spark):
             import IPython
             dbutils = IPython.get_ipython().user_ns["dbutils"]
         return dbutils
-dbutils = get_dbutils(spark)
-
-dbutils = get_dbutils(spark)
-# Retrieve the JDBC URL, database name, database username and database password for the reference database from Databricks secrets
-refDBjdbcURL = dbutils.secrets.get('tp_dpf2cdl', 'refDBjdbcURL')
-refDBname = dbutils.secrets.get('tp_dpf2cdl', 'refDBname')
-refDBuser = dbutils.secrets.get('tp_dpf2cdl', 'refDBuser')
-refDBpwd = dbutils.secrets.get('tp_dpf2cdl', 'refDBpwd')
-
-catalog_name= dbutils.secrets.get('tp_dpf2cdl', 'databricks-catalog-name')
-postgres_schema= dbutils.secrets.get('tp_dpf2cdl', 'database-postgres-schema')
 
 ###############################################################################
 
