@@ -9,6 +9,8 @@ from pyspark.sql import functions as F
 import zipfile
 import re
 
+import psycopg2
+
 # Define the light refined path
 LIGHT_REFINED_PATH='tp-publish-data/'
 
