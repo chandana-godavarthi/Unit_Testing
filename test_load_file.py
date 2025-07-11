@@ -7,7 +7,7 @@ mock_dbutils = MagicMock()
 sys.modules['dbutils'] = mock_dbutils
 
 def setup_module(module):
-    import load_file as lf
+    import common as lf
     lf.spark = MagicMock()
     lf.dbutils = mock_dbutils
     lf.display = MagicMock()
@@ -37,7 +37,7 @@ def create_mock_df(columns):
     return mock_df
 
 def test_load_file_fact():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = [{'file_col_name': 'A', 'db_col_name': 'B'}]
     mock_df = create_mock_df(['A'])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
@@ -46,7 +46,7 @@ def test_load_file_fact():
     assert result == 'Success'
 
 def test_load_file_non_fact():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = [{'file_col_name': 'A', 'db_col_name': 'B'}]
     mock_df = create_mock_df(['A'])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
@@ -55,7 +55,7 @@ def test_load_file_non_fact():
     assert result == 'Success'
 
 def test_load_file_handles_empty_columns():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = []
     mock_df = create_mock_df([])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
@@ -64,7 +64,7 @@ def test_load_file_handles_empty_columns():
     assert result == 'Success'
 
 def test_load_file_unsupported_file_type():
-    import load_file as lf
+    import common as lf
     lf.dbutils.fs.ls.return_value = []
     mock_df = create_mock_df([])
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = []
@@ -74,7 +74,7 @@ def test_load_file_unsupported_file_type():
     assert result == 'Success'
 
 def test_load_file_no_zip_found():
-    import load_file as lf
+    import common as lf
     lf.dbutils.fs.ls.return_value = [MagicMock(name='otherfile.csv', path='/mnt/tp-source-data/WORK/otherfile.csv')]
     mock_df = create_mock_df([])
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = []
@@ -84,7 +84,7 @@ def test_load_file_no_zip_found():
     assert result == 'Success'
 
 def test_load_file_multiple_column_mappings():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = [{'file_col_name': 'A', 'db_col_name': 'B,C'}]
     mock_df = create_mock_df(['A'])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
@@ -93,7 +93,7 @@ def test_load_file_multiple_column_mappings():
     assert result == 'Success'
 
 def test_load_file_special_char_column_mapping():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = [{'file_col_name': 'A', 'db_col_name': 'B#1'}]
     mock_df = create_mock_df(['A'])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
@@ -102,7 +102,7 @@ def test_load_file_special_char_column_mapping():
     assert result == 'Success'
 
 def test_load_file_empty_input_file():
-    import load_file as lf
+    import common as lf
     lf.spark.read.parquet.return_value.filter.return_value.where.return_value.select.return_value.distinct.return_value.collect.return_value = [{'file_col_name': 'A', 'db_col_name': 'B'}]
     mock_df = create_mock_df([])
     lf.spark.read.format.return_value.option.return_value.option.return_value.option.return_value.load.return_value = mock_df
