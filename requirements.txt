@@ -3,3 +3,6 @@ pytest-cov
 pandas
 numpy
 pyspark
+IPython
+psycopg2-binary
+
